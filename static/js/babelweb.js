@@ -127,9 +127,9 @@ function babelweb() {
       d3.select("#state").style("background-color", palette.red);
   }
 
-  function connect(server) {
+  function connect() {
     /* socket.io server */
-    var socket = io.connect(server);
+    var socket = io();
 
     socket.on('connect', function() { update_status("connected", true); });
     socket.on('disconnect', function() { update_status("disconnected", false); });

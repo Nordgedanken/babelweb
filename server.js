@@ -70,7 +70,7 @@ function handleClose(router, id) {
     "type": "delete",
     "id": id
   };
-  io.sockets.json.send(m);
+  io.emit(m);
 }
 
 routers.forEach(function (r) {
@@ -85,17 +85,14 @@ routers.forEach(function (r) {
 var connect = require('connect'),
   http = require('http'),
   serveStatic = require('serve-static'),
-  app = connect().use(serveStatic(__dirname + '/static')),
+  app = connect().use(serveStatic(__dirname + '/static', {
+    cache:1,	// don't cache
+    gzip:true	// gzip our assets
+  })),
   server = http.createServer(app),
   io = require('socket.io')(server, {
-    'transports': [
-      'websocket',
-      // disabled by default
-      'flashsocket',
-      'htmlfile',
-      'xhr-polling',
-      'jsonp-polling'
-    ],
+    'serveClient': true,
+
     'browser client minification': true,  // Send minified client
     'browser client etag': true,          // Apply etag caching logic based on version number
     'browser client gzip': true,          // Gzip the file
@@ -108,7 +105,7 @@ server.listen(config.port, config.host);
 
 /* Send updates to clients when they connect */
 
-io.sockets.on('connection', function (client) {
+io.on('connection', function (client) {
   var states = [];
   routers.forEach(function (r) {
     var s = r.getState();
@@ -138,7 +135,7 @@ function timedUpdate() {
     }
   });
   if (m.update.length > 0) {
-    io.sockets.volatile.json.send(m);
+    io.emit(m);
   }
   setTimeout(timedUpdate, config.update);
 }
