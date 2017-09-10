@@ -84,28 +84,27 @@ routers.forEach(function (r) {
 
 var connect = require('connect'),
   http = require('http'),
-  app = connect().use(connect.static(__dirname + '/static')),
+  serveStatic = require('serve-static'),
+  app = connect().use(serveStatic(__dirname + '/static')),
   server = http.createServer(app),
-  io = require('socket.io').listen(server);
+  io = require('socket.io')(server, {
+    'transports': [
+      'websocket',
+      // disabled by default
+      'flashsocket',
+      'htmlfile',
+      'xhr-polling',
+      'jsonp-polling'
+    ],
+    'browser client minification': true,  // Send minified client
+    'browser client etag': true,          // Apply etag caching logic based on version number
+    'browser client gzip': true,          // Gzip the file
+    'browser client expires': true        // Adds Cache-Control: private, x-gzip-ok="", max-age=31536000 header
+  });
 
 if (config.verbose) { app.use(connect.logger('dev')); } // XXX
 
 server.listen(config.port, config.host);
-
-io.configure(function () {
-  io.enable('browser client minification');
-  io.enable('browser client etag');
-  io.set('log level', config.verbose ? 3 : 1);
-
-  io.set('transports', [
-    'websocket',
-    // disabled by default
-    'flashsocket',
-    'htmlfile',
-    'xhr-polling',
-    'jsonp-polling'
-  ]);
-});
 
 /* Send updates to clients when they connect */
 
